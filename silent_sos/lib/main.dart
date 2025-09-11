@@ -138,3 +138,70 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 }
 
+
+import 'package:flutter/material.dart';
+import '../styles.dart';
+import '../splash_welcome_page.dart';
+import '../login_page.dart';
+import '../signup_page.dart';
+import 'home_dashboard_page.dart';
+import '../pre_alert_countdown_page.dart';
+import '../receiver_alert_page.dart';
+import '../profile_page.dart';
+import '../stats_page.dart';
+import '../user.dart'; // Make sure this import exists
+import 'dark_theme.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'SilentSOS',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: AppColors.bg,
+        brightness: Brightness.light,
+      ),
+      darkTheme: DarkTheme.theme,
+      themeMode: _themeMode,
+      initialRoute: '/',
+      routes: {
+        '/': (context) => SplashWelcomePage(toggleTheme: _toggleTheme),
+        '/login': (context) => LoginPage(),
+        '/signup': (context) => SignupPage(),
+        '/dashboard': (context) {
+          final user = ModalRoute.of(context)?.settings.arguments as User?;
+          return HomeDashboardPage(
+            onPressSOS: () {
+              Navigator.pushNamed(context, '/countdown');
+            },
+            user: user,
+            toggleTheme: _toggleTheme,
+          );
+        },
+        '/countdown': (context) => PreAlertCountdownPage(),
+        '/receiver': (context) => ReceiverAlertPage(),
+        '/profile': (context) => ProfilePage(),
+        '/stats': (context) => StatsPage(),
+      },
+    );
+  }
+}
