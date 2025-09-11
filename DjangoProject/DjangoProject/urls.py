@@ -18,15 +18,21 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
+from django.conf import settings
+from django.conf.urls.static import static
 
-from core.views import LoginView, RiskAreaViewSet, AlertViewSet
-
+from core.views import LoginView, RiskAreaViewSet, AlertViewSet, GoogleAuthView, EndorsementViewSet
 
 router = DefaultRouter()
 router.register(r'risk-areas', RiskAreaViewSet)
 router.register(r'alerts', AlertViewSet)
+router.register(r'endorsements', EndorsementViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/google/', GoogleAuthView.as_view(), name='google_auth'),
+
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
