@@ -56,7 +56,7 @@ AUTH_USER_MODEL = "core.User"   # replace backend with your app name
 # replace with actual frontend URL
 # CORS Settings
 # CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000',]
+CORS_ALLOWED_ORIGINS = ['']
 CORS_ALLOW_CREDENTIALS = True
 
 SIMPLE_JWT = {
