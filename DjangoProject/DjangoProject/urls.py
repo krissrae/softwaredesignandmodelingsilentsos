@@ -17,16 +17,24 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
+from django.conf import settings
+from django.conf.urls.static import static
 
-from core.views import LoginView, RiskAreaViewSet, AlertViewSet
-
+from core.views import LoginView, RiskAreaViewSet, AlertViewSet, EndorsementViewSet, \
+    google_login_callback, validate_google_token, google_logout
 
 router = DefaultRouter()
 router.register(r'risk-areas', RiskAreaViewSet)
 router.register(r'alerts', AlertViewSet)
+router.register(r'endorsements', EndorsementViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/google/callback/', google_login_callback, name='google_login_callback'),
+    path('auth/google/validate/', validate_google_token, name='validate_google_token'),
+    path('auth/google/logout/', google_logout, name='google_logout'),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

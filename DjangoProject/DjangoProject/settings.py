@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 import dj_database_url
 
@@ -42,9 +43,34 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'core.apps.CoreConfig',
+    'channels',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'rest_framework.authtoken',
+
 ]
 
 AUTH_USER_MODEL = "core.User"   # replace backend with your app name
+# replace with actual frontend URL
+# CORS Settings
+# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = ['']
+CORS_ALLOW_CREDENTIALS = True
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=90),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
+}
+REST_USE_JWT = True
+JWT_AUTH_COOKIE = 'my-auth-token'
+JWT_AUTH_REFRESH_COOKIE = 'my-refresh-token'
+
+LOGIN_REDIRECT_URL = '/api/callback/'
+LOGIN_URL = '/accounts/google/login/?process=login'
+
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -59,6 +85,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware'
 ]
 
 ROOT_URLCONF = 'DjangoProject.urls'
@@ -80,6 +107,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'DjangoProject.wsgi.application'
+ASGI_APPLICATION = 'DjangoProject.asgi.application'
 
 
 # Database
@@ -134,3 +162,20 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR, 'media'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend'
+]
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': '359089763728-2vdk2eu4ou45n1t635i1dhvq9kh6980p.apps.googleusercontent.com',
+            'secret': '',
+            'key': ''
+        }
+    }
+}
