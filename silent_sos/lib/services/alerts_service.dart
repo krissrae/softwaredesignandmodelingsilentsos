@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 
 class AlertsService {
-  static const String baseUrl = 'http://192.168.137.1:8000/alerts';
+  static const String baseUrl = 'http://192.168.88.115:8000/alerts/';
   static const Duration _timeout = Duration(seconds: 10);
 
   // GET all alerts with console logging - updated to handle paginated response

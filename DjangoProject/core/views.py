@@ -12,6 +12,7 @@ from google.oauth2 import id_token
 from rest_framework import generics, status, viewsets, permissions
 from rest_framework.exceptions import ValidationError
 from django.http import JsonResponse
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -20,7 +21,8 @@ from channels.layers import get_channel_layer
 from .models import User, RiskArea, Alert, validate_school_email, Endorsement
 from .serializers import UserSerializer, RiskAreaSerializer, AlertSerializer, LoginSerializer, EndorsementSerializer
 
-#class GoogleAuthView(APIView):
+
+# class GoogleAuthView(APIView):
 #   def post(self, request):
 #       token = request.data.get('token')
 #       try:
@@ -30,7 +32,7 @@ from .serializers import UserSerializer, RiskAreaSerializer, AlertSerializer, Lo
 #           # Validate school email
 #           try:
 #               validate_school_email(email)
- #           except ValidationError as e:
+#           except ValidationError as e:
 #              return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 #           # Get or create user
 #           user, created = User.objects.get_or_create(email=email)
@@ -40,14 +42,13 @@ from .serializers import UserSerializer, RiskAreaSerializer, AlertSerializer, Lo
 #               user.save()
 #           # Return success
 #           return Response({'message': 'Authenticated', 'user': email}, status=status.HTTP_200_OK)
- #       except ValueError:
+#       except ValueError:
 #          return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
 def google_login_callback(request):
     user = request.user
     social_accounts = SocialAccount.objects.filter(user=user, provider='google')
     social_account = social_accounts.first()
-
 
     if not social_account:
         return JsonResponse({'error': 'NoSocialAccount'}, status=400)
@@ -60,6 +61,7 @@ def google_login_callback(request):
     refresh = RefreshToken.for_user(user)
     access_token = str(refresh.access_token)
     return JsonResponse({'access_token': access_token}, status=200)
+
 
 @csrf_exempt
 def validate_google_token(request):
@@ -110,7 +112,7 @@ class EndorsementViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-#login view to get JWT tokens
+# login view to get JWT tokens
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -130,36 +132,72 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class RiskAreaViewSet(viewsets.ModelViewSet):
     queryset = RiskArea.objects.all()
     serializer_class = RiskAreaSerializer
     permission_classes = [IsAuthenticated]
 
+
 class AlertViewSet(viewsets.ModelViewSet):
     queryset = Alert.objects.all()
     serializer_class = AlertSerializer
     permission_classes = [AllowAny]
-
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def perform_create(self, serializer):
-        alert = serializer.save(user=self.request.user)
-        # Broadcast alert to relevant users/groups
-        channel_layer = get_channel_layer()
-        # Example: send to all users (replace with your logic for nearby users)
-        async_to_sync(channel_layer.group_send)(
-            "alerts",
-            {
-                "type": "send_alert",
-                "alert": {
-                    "id": alert.id,
-                    "user": alert.user.email,
-                    "timestamp": str(alert.timestamp),
-                    "location_link": alert.location_link,
-                }
-            }
-        )
+        # Get email from request data
+        email = self.request.data.get('email')
+        if not email:
+            raise ValidationError({'email': 'Email is required'})
 
-    # def get_queryset(self):
-    #     #return only alerts of the logged-in user
-    #     return Alert.objects.filter(user=self.request.user)
-# Create your views here.
+        # Get or create user
+        user, created = User.objects.get_or_create(email=email)
+
+        # Handle audio file
+        audio_file = self.request.FILES.get('audio')
+        if audio_file:
+            # Validate file extension for .aac files
+            import os
+            valid_extensions = ['.aac', '.mp3', '.wav', '.m4a']
+            ext = os.path.splitext(audio_file.name)[1].lower()
+            if ext not in valid_extensions:
+                raise ValidationError({'audio': 'Only .aac, .mp3, .wav, and .m4a files are allowed.'})
+
+        # Handle RiskArea creation/linking
+        risk_area_data = self.request.data.get('risk_area')
+        risk_area = None
+
+        if risk_area_data:
+            if isinstance(risk_area_data, dict):
+                # Create new RiskArea if data provided
+                risk_area_serializer = RiskAreaSerializer(data=risk_area_data)
+                if risk_area_serializer.is_valid():
+                    risk_area = risk_area_serializer.save()
+                else:
+                    raise ValidationError({'risk_area': risk_area_serializer.errors})
+            elif isinstance(risk_area_data, int):
+                # Link to existing RiskArea by ID
+                try:
+                    risk_area = RiskArea.objects.get(id=risk_area_data)
+                except RiskArea.DoesNotExist:
+                    raise ValidationError({'risk_area': 'RiskArea not found'})
+
+        # Save alert with user, risk_area, and audio
+        alert = serializer.save(user=user, risk_area=risk_area, audio=audio_file)
+
+        # Optional: Keep channels for real-time alerts if needed
+        # channel_layer = get_channel_layer()
+        # async_to_sync(channel_layer.group_send)(
+        #     "alerts",
+        #     {
+        #         "type": "send_alert",
+        #         "alert": {
+        #             "id": alert.id,
+        #             "user": alert.user.email,
+        #             "timestamp": str(alert.timestamp),
+        #             "location_link": alert.location_link,
+        #             "has_audio": bool(alert.audio),
+        #         }
+        #     }
+        # )

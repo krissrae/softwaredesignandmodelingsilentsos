@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/SilentSOS(flutter)/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/SilentSOS(flutter)/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/SilentSOS(flutter)/build" />
+      <excludeFolder url="file://$MODULE_DIR$/SilentSOS/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/SilentSOS/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/SilentSOS/build" />
+      <excludeFolder url="file://$MODULE_DIR$/silent_sos/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/silent_sos/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/silent_sos/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

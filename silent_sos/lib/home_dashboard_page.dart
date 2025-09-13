@@ -127,7 +127,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
         onPressed: () {
           Navigator.push(
             context,
@@ -135,7 +134,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               builder: (context) => PreAlertCountdownPage(
                 onFinished: () {
                   Navigator.pop(context);
-                  widget.onPressSOS();
                 },
                 onCancel: () => Navigator.pop(context),
               ),
@@ -145,7 +143,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         tooltip: 'SOS',
         child: const Icon(Icons.warning),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
