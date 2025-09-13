@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:silentsos/pre_alert_countdown_page.dart';
+import 'package:silentsos/user.dart';
+
 import '../profile_page.dart';
 import '../stats_page.dart';
 import '../styles.dart';
-import '../user.dart';
 
 class HomeDashboardPage extends StatefulWidget {
   final VoidCallback onPressSOS;
@@ -64,11 +66,27 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: widget.onPressSOS,
+        onPressed:() {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  PreAlertCountdownPage(
+                    onFinished: () async {
+                      Navigator.pop(context); // Close countdown page
+                      widget.onPressSOS(); // Trigger SOS
+                    },
+                    onCancel: () {
+                      Navigator.pop(context); // Just return to dashboard
+                    },
+                  ),
+            ),
+          );
+        },
+
         child: Icon(Icons.warning),
         tooltip: 'SOS',
       ),
-      // Added ElevatedButton for brief description
       persistentFooterButtons: [
         ElevatedButton(
           onPressed: () {

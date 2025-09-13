@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../styles.dart';
-import '../user.dart';
+import 'package:silentsos/user.dart';
 import 'services/google_auth_service.dart';
 
 class SignupPage extends StatelessWidget {
@@ -56,20 +56,7 @@ class SignupPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            ElevatedButton(
-              style: pillButton(AppColors.primary),
-              onPressed: () {
-                // Get values from fields (you may need to use controllers for real input)
-                final name = 'New User'; // Replace with actual input
-                final email = 'student@example.com'; // Replace with actual input
-                Navigator.pushNamed(
-                  context,
-                  '/dashboard',
-                  arguments: User(name: name, email: email),
-                );
-              },
-              child: const Text('Create account'),
-            ),
+
             const SizedBox(height: 12),
             ElevatedButton.icon(
               style: pillButton(Colors.white),

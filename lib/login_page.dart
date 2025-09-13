@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:silentsos/user.dart';
+
 import 'styles.dart';
-import 'user.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});

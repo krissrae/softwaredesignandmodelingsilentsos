@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../styles.dart';
-import '../user.dart';
+import 'package:silentsos/user.dart';
 
 class ProfilePage extends StatelessWidget {
   final User? user;

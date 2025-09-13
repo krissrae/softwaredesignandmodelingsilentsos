@@ -11,8 +11,11 @@ import 'pre_alert_countdown_page.dart';
 import 'receiver_alert_page.dart';
 import 'profile_page.dart';
 import 'stats_page.dart';
-import 'user.dart';
+import 'package:silentsos/user.dart';
 import 'dark_theme.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:convert';
 
 void main() => runApp(const MyApp());
 
@@ -34,6 +37,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final int _requiredPresses = 3;
   final Duration _window = Duration(seconds: 2);
   bool _sosFired = false;
+  WebSocketChannel? _alertChannel;
 
   @override
   void initState() {
@@ -45,12 +49,45 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     } catch (e) {
       print('Screen plugin subscription failed: $e');
     }
+    // Initialize WebSocket for real-time alerts
+    _initAlertWebSocket();
+  }
+
+  void _initAlertWebSocket() {
+    // Replace with your backend host/IP as needed
+    final wsUrl = 'ws://localhost:8000/ws/alerts/';
+    _alertChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
+    _alertChannel!.stream.listen((message) {
+      try {
+        final alert = json.decode(message);
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Emergency Alert!'),
+            content: Text('User: \\${alert['user']}\nTime: \\${alert['timestamp']}\nLocation: \\${alert['location_link'] ?? 'N/A'}'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } catch (e) {
+        print('Error parsing alert: $e');
+      }
+    }, onError: (error) {
+      print('WebSocket error: $error');
+    }, onDone: () {
+      print('WebSocket closed');
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _screenSub?.cancel();
+    _alertChannel?.sink.close();
     super.dispose();
   }
 
@@ -70,30 +107,64 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void _recordEvent() {
     final now = DateTime.now();
     _events.add(now);
-
     _events.removeWhere((t) => now.difference(t) > _window);
-
     if (!_sosFired && _events.length >= _requiredPresses) {
       _sosFired = true;
       _events.clear();
       _triggerSos();
       Future.delayed(Duration(seconds: 5), () => _sosFired = false);
     }
-    print('Events in window: ${_events.length}');
+    print('Events in window: \\${_events.length}');
+  }
+
+  Future<Position?> _getCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      print('Location services are disabled.');
+      return null;
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        print('Location permissions are denied');
+        return null;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      print('Location permissions are permanently denied.');
+      return null;
+    }
+    return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
   }
 
   Future<void> _triggerSos() async {
-    print('SOS triggered at ${DateTime.now()}');
+    print('SOS triggered at \\${DateTime.now()}');
+    // Get current location
+    Position? position = await _getCurrentLocation();
+    String? mapsLink;
+    double? lat;
+    double? lon;
+    if (position != null) {
+      lat = position.latitude;
+      lon = position.longitude;
+      mapsLink = 'https://maps.google.com/?q=$lat,$lon';
+      print('Location: $lat, $lon');
+      print('Google Maps link: $mapsLink');
+    } else {
+      print('Location unavailable');
+    }
+    // Send alert with location and maps link
     try {
       final response = await http.post(
         Uri.parse('https://your-backend.example.com/api/sos/'),
         headers: {'Content-Type': 'application/json'},
-        body: '{"user":"radiance","lat":null,"lon":null,"timestamp":"${DateTime.now().toUtc().toIso8601String()}"}',
+        body: '{"user":"radiance","lat":$lat,"lon":$lon,"maps_link":"$mapsLink","timestamp":"${DateTime.now().toUtc().toIso8601String()}"}',
       );
       if (response.statusCode == 200) {
         print('SOS sent');
       } else {
-        print('SOS failed: ${response.statusCode} ${response.body}');
+        print('SOS failed: \\${response.statusCode} \\${response.body}');
       }
     } catch (e) {
       print('SOS request error: $e');
@@ -116,7 +187,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         scaffoldBackgroundColor: AppColors.bg,
         brightness: Brightness.light,
       ),
-      darkTheme: DarkTheme.theme,
       themeMode: _themeMode,
       initialRoute: '/',
       routes: {
