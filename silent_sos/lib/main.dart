@@ -188,7 +188,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         brightness: Brightness.light,
       ),
       themeMode: _themeMode,
-      initialRoute: '/',
+      initialRoute: '/dashboard',
       routes: {
         '/': (context) => SplashWelcomePage(toggleTheme: _toggleTheme),
         '/login': (context) => LoginPage(),

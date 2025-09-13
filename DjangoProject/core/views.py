@@ -138,7 +138,7 @@ class RiskAreaViewSet(viewsets.ModelViewSet):
 class AlertViewSet(viewsets.ModelViewSet):
     queryset = Alert.objects.all()
     serializer_class = AlertSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
     def perform_create(self, serializer):
@@ -159,7 +159,7 @@ class AlertViewSet(viewsets.ModelViewSet):
             }
         )
 
-    def get_queryset(self):
-        #return only alerts of the logged-in user
-        return Alert.objects.filter(user=self.request.user)
+    # def get_queryset(self):
+    #     #return only alerts of the logged-in user
+    #     return Alert.objects.filter(user=self.request.user)
 # Create your views here.
