@@ -8,8 +8,17 @@ import '../styles.dart';
 
 class HomeDashboardPage extends StatefulWidget {
   final VoidCallback onPressSOS;
-  const HomeDashboardPage({super.key, required this.onPressSOS, required void Function() toggleTheme, User? user});
+  final VoidCallback toggleTheme;
+  final User? user;
 
+  const HomeDashboardPage({
+    super.key,
+    required this.onPressSOS,
+    required this.toggleTheme,
+    this.user,
+  });
+
+    // Replace with your actual Home content widget
   @override
   State<HomeDashboardPage> createState() => _HomeDashboardPageState();
 }
@@ -17,17 +26,56 @@ class HomeDashboardPage extends StatefulWidget {
 class _HomeDashboardPageState extends State<HomeDashboardPage> {
   int _selectedIndex = 0;
 
-  static List<Widget> _pages = <Widget>[
-    // Replace with your actual Home content widget
-    Center(child: Text('Home')),
-    StatsPage(),
-    ProfilePage(),
+  late final List<Widget> _pages = <Widget>[
+    _buildHomePage(),
+    const StatsPage(),
+    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  Widget _buildHomePage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.shield, size: 80, color: Colors.redAccent),
+          const SizedBox(height: 16),
+          const Text(
+            'Welcome to SilentSOS',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('About SilentSOS'),
+                  content: const Text(
+                    'SilentSOS helps you stay safe. In an emergency, '
+                        'you can quickly send a silent alert to your trusted '
+                        'contacts, sharing your situation and location without '
+                        'drawing attention.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            child: const Text('Brief Description'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -37,18 +85,31 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
       appBar: AppBar(
         backgroundColor: AppColors.bg,
         elevation: 0,
-        title: Row(children: [
-          Icon(Icons.visibility, color: AppColors.primary),
-          const SizedBox(width: 8),
-          const Text('SilentSOS'),
-        ]),
+        title: Row(
+          children: [
+            Icon(Icons.visibility, color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text('SilentSOS'),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.brightness_6),
+            onPressed: widget.toggleTheme,
+            tooltip: 'Toggle Theme',
+          ),
+        ],
       ),
       body: _pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
+          selectedItemColor: AppColors.primary,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -66,49 +127,25 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed:() {
+        backgroundColor: AppColors.primary,
+        onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  PreAlertCountdownPage(
-                    onFinished: () async {
-                      Navigator.pop(context); // Close countdown page
-                      widget.onPressSOS(); // Trigger SOS
-                    },
-                    onCancel: () {
-                      Navigator.pop(context); // Just return to dashboard
-                    },
-                  ),
+              builder: (context) => PreAlertCountdownPage(
+                onFinished: () {
+                  Navigator.pop(context);
+                  widget.onPressSOS();
+                },
+                onCancel: () => Navigator.pop(context),
+              ),
             ),
           );
         },
-
-        child: Icon(Icons.warning),
         tooltip: 'SOS',
+        child: const Icon(Icons.warning),
       ),
-      persistentFooterButtons: [
-        ElevatedButton(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text('Brief Description'),
-                content: Text(
-                  'SilentSOS is an app designed to help you stay safe. When you are in danger, you can quickly send a silent signal to your trusted contacts, alerting them to your situation and location without drawing attention.'
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('OK'),
-                  ),
-                ],
-              ),
-            );
-          },
-          child: Text('Brief description'),
-        ),
-      ],
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
